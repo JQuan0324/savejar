@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>每日存錢</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  /* 在 Telegram 裡會自動套用使用者的主題色；瀏覽器預覽時用後面的預設值 */
+  :root {
+    --page: var(--tg-theme-secondary-bg-color, #f1f2f6);
+    --card: var(--tg-theme-section-bg-color, var(--tg-theme-bg-color, #ffffff));
+    --text: var(--tg-theme-text-color, #14171a);
+    --hint: var(--tg-theme-hint-color, #8b919a);
+    --head: var(--tg-theme-section-header-text-color, var(--tg-theme-hint-color, #6d7885));
+    --sep: var(--tg-theme-section-separator-color, rgba(128, 128, 128, .18));
+    --accent: var(--tg-theme-button-color, #2aabee);
+    --accent-text: var(--tg-theme-button-text-color, #ffffff);
+    --ok: #20a058;
+    --ok-soft: rgba(32, 160, 88, .14);
+    --pending: #c77c02;
+    --pending-soft: rgba(230, 150, 20, .16);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page: var(--tg-theme-secondary-bg-color, #0f1720);
+      --card: var(--tg-theme-section-bg-color, var(--tg-theme-bg-color, #1c2733));
+      --text: var(--tg-theme-text-color, #f2f4f7);
+      --hint: var(--tg-theme-hint-color, #7d8b99);
+      --head: var(--tg-theme-section-header-text-color, var(--tg-theme-hint-color, #7d8b99));
+      --accent: var(--tg-theme-button-color, #3e8fd8);
+      --ok: #3bcf7c;
+      --ok-soft: rgba(59, 207, 124, .16);
+      --pending: #f0b429;
+      --pending-soft: rgba(240, 180, 41, .16);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; }
+  body {
+    background: var(--page);
+    color: var(--text);
+    font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+  main { max-width: 480px; margin: 0 auto; padding: 16px 16px calc(28px + env(safe-area-inset-bottom)); }
+
+  header { display: flex; align-items: baseline; justify-content: space-between; margin: 4px 4px 14px; }
+  .title { font-size: 22px; font-weight: 700; }
+  .date { color: var(--hint); font-size: 14px; }
+
+  .hero { background: var(--card); border-radius: 20px; padding: 26px 20px 20px; text-align: center; }
+  .hero .label { color: var(--hint); font-size: 14px; }
+  .amount { display: flex; justify-content: center; align-items: baseline; gap: 6px; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
+  .amount .cur { font-size: 22px; font-weight: 600; color: var(--hint); }
+  #num { font-size: 80px; font-weight: 800; line-height: 1.05; letter-spacing: -0.02em; min-width: 2ch; }
+  .hero.rolling #num { color: var(--accent); }
+  .hero.done #num { color: var(--ok); }
+  .hero.landed #num { animation: pop .45s cubic-bezier(.2, 1.6, .4, 1); }
+  @keyframes pop { from { transform: scale(.7); } to { transform: scale(1); } }
+  .sub { color: var(--hint); font-size: 14px; min-height: 1.45em; margin: 6px 0 18px; }
+  .hero.done .sub { color: var(--ok); font-weight: 600; margin-bottom: 4px; }
+
+  .btn {
+    display: block; width: 100%; border: 0; border-radius: 14px; padding: 15px;
+    font: inherit; font-size: 17px; font-weight: 600; cursor: pointer;
+    background: var(--accent); color: var(--accent-text);
+    transition: transform .08s, opacity .15s;
+  }
+  .btn.ok { background: var(--ok); color: #fff; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .btn:active:not(:disabled) { transform: scale(.98); }
+
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .stat { background: var(--card); border-radius: 16px; padding: 14px 16px; }
+  .stat .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat .k { color: var(--hint); font-size: 13px; }
+
+  .owed { margin-top: 12px; padding: 11px 14px; border-radius: 14px; background: var(--pending-soft); color: var(--pending); font-size: 14px; }
+
+  .mhead { display: flex; justify-content: space-between; margin: 22px 16px 6px; font-size: 13px; font-weight: 600; color: var(--head); }
+  .group { background: var(--card); border-radius: 16px; overflow: hidden; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
+  .row + .row { border-top: 1px solid var(--sep); }
+  .row .d { flex: 1; }
+  .row .d small { color: var(--hint); margin-left: 8px; font-size: 13px; }
+  .row .n { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tag { min-width: 48px; padding: 4px 10px; border: 0; border-radius: 999px; font: inherit; font-size: 12px; font-weight: 600; text-align: center; }
+  .tag.ok { background: var(--ok-soft); color: var(--ok); }
+  .tag.wait { background: var(--pending-soft); color: var(--pending); }
+  .tag.fix { background: var(--accent); color: var(--accent-text); cursor: pointer; }
+  .empty { margin-top: 22px; padding: 24px; text-align: center; color: var(--hint); font-size: 14px; }
+
+  .foot { margin-top: 26px; text-align: center; color: var(--hint); font-size: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="title">每日存錢 🐷</div>
+    <div class="date" id="date"></div>
+  </header>
+
+  <section class="hero" id="hero">
+    <div class="label" id="heroLabel">今天的數字</div>
+    <div class="amount"><span class="cur">RM</span><span id="num">…</span></div>
+    <div class="sub" id="heroSub">載入中…</div>
+    <button class="btn" id="action" disabled>載入中…</button>
+  </section>
+
+  <section class="stats">
+    <div class="stat"><div class="v" id="sTotal">RM 0</div><div class="k">累積已存</div></div>
+    <div class="stat"><div class="v" id="sMonth">RM 0</div><div class="k">本月已存</div></div>
+    <div class="stat"><div class="v" id="sStreak">0 天</div><div class="k">連續存錢</div></div>
+    <div class="stat"><div class="v" id="sDays">0 天</div><div class="k">總共存了</div></div>
+  </section>
+  <div class="owed" id="owed" hidden></div>
+
+  <section id="list"></section>
+
+  <p class="foot">
+    每天從 1–50 隨機抽一個整數，每個數字機率都是 2%。<br>一天只能抽一次，抽了就要存 💪
+    <span id="mode" hidden><br>（瀏覽器預覽模式：資料只存在這個瀏覽器）</span>
+  </p>
+</main>
+
+<script>
+(() => {
+  'use strict';
+  const MIN = 1, MAX = 50;
+  const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
+  const $ = id => document.getElementById(id);
+
+  // ---------- Telegram ----------
+  const tg = window.Telegram && window.Telegram.WebApp;
+  const inTG = !!(tg && tg.initData);
+  const can = v => !!(inTG && tg.isVersionAtLeast(v));
+
+  if (inTG) {
+    tg.ready();
+    tg.expand();
+    try {
+      if (can('6.1')) { tg.setHeaderColor('secondary_bg_color'); tg.setBackgroundColor('secondary_bg_color'); }
+      if (can('7.7')) tg.disableVerticalSwipes();
+    } catch (e) { /* 舊版 Telegram 不支援就算了 */ }
+  } else {
+    $('mode').hidden = false;
+  }
+
+  function haptic(kind, arg) {
+    if (!can('6.1')) return;
+    const h = tg.HapticFeedback;
+    if (kind === 'tick') h.selectionChanged();
+    else h.notificationOccurred(arg || 'success');
+  }
+  const ask = msg => can('6.2')
+    ? new Promise(res => tg.showConfirm(msg, ok => res(!!ok)))
+    : Promise.resolve(window.confirm(msg));
+  const tell = msg => can('6.2') ? tg.showAlert(msg) : window.alert(msg);
+
+  // ---------- 儲存：Telegram CloudStorage（跨裝置同步），瀏覽器預覽時用 localStorage ----------
+  // 每個月一個 key，例如 "m-2026-09" → {"30":[23,1]}（[金額, 是否已存]）
+  const useCloud = can('6.9');
+  const LS = 'savejar:';
+  const cloud = (method, ...args) => new Promise((resolve, reject) =>
+    tg.CloudStorage[method](...args, (err, res) => err ? reject(err) : resolve(res)));
+
+  const store = {
+    async keys() {
+      if (useCloud) return cloud('getKeys');
+      return Object.keys(localStorage).filter(k => k.startsWith(LS)).map(k => k.slice(LS.length));
+    },
+    async getMany(keys) {
+      if (!keys.length) return {};
+      if (useCloud) return cloud('getItems', keys);
+      return Object.fromEntries(keys.map(k => [k, localStorage.getItem(LS + k)]));
+    },
+    async set(key, value) {
+      if (useCloud) return cloud('setItem', key, value);
+      localStorage.setItem(LS + key, value);
+    },
+  };
+
+  let records = {}; // "YYYY-MM-DD" → { n, saved }
+
+  async function load() {
+    const keys = (await store.keys()).filter(k => /^m-\d{4}-\d{2}$/.test(k));
+    const vals = await store.getMany(keys);
+    const next = {};
+    for (const k of keys) {
+      let obj;
+      try { obj = JSON.parse(vals[k] || '{}'); } catch (e) { continue; }
+      for (const [day, v] of Object.entries(obj)) {
+        const n = Number(v && v[0]);
+        if (!/^\d{2}$/.test(day) || !Number.isInteger(n) || n < MIN || n > MAX) continue;
+        next[`${k.slice(2)}-${day}`] = { n, saved: !!v[1] };
+      }
+    }
+    records = next;
+  }
+
+  async function persist(date) {
+    const month = date.slice(0, 7), obj = {};
+    for (const [d, r] of Object.entries(records)) {
+      if (d.startsWith(month)) obj[d.slice(8)] = [r.n, r.saved ? 1 : 0];
+    }
+    await store.set('m-' + month, JSON.stringify(obj));
+  }
+
+  // ---------- 日期 ----------
+  const pad = n => String(n).padStart(2, '0');
+  const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const today = () => ymd(new Date());
+  const md = s => { const d = parse(s); return `${d.getMonth() + 1}月${d.getDate()}日`; };
+  const rm = n => `RM ${n.toLocaleString('en-MY')}`;
+
+  // ---------- 抽數字：1–50 完全平均 ----------
+  // 用加密等級亂數 + 拒絕取樣，避免取餘數造成的些微偏差
+  function fairRandom() {
+    const range = MAX - MIN + 1;
+    const limit = Math.floor(0x100000000 / range) * range;
+    const buf = new Uint32Array(1);
+    do crypto.getRandomValues(buf); while (buf[0] >= limit);
+    return MIN + (buf[0] % range);
+  }
+
+  const hero = $('hero'), btn = $('action'), num = $('num');
+  let loaded = false, busy = false;
+
+  // 滾動動畫只是視覺效果，結果在動畫開始前就已經決定並存好了
+  function animate(final) {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { num.textContent = final; return Promise.resolve(); }
+    $('heroLabel').textContent = '抽獎中…';
+    $('heroSub').textContent = '　';
+    hero.classList.add('rolling');
+    return new Promise(done => {
+      let delay = 40, elapsed = 0;
+      const tick = () => {
+        elapsed += delay;
+        if (elapsed > 1500) {
+          num.textContent = final;
+          hero.classList.remove('rolling');
+          hero.classList.add('landed');
+          return done();
+        }
+        let r;
+        do r = MIN + Math.floor(Math.random() * (MAX - MIN + 1)); while (String(r) === num.textContent);
+        num.textContent = r;
+        haptic('tick');
+        delay *= 1.12;
+        setTimeout(tick, delay);
+      };
+      tick();
+    });
+  }
+
+  async function roll() {
+    busy = true;
+    btn.disabled = true;
+    let t, fresh = false;
+    try {
+      await load(); // 重新讀一次，避免另一台裝置今天已經抽過
+      t = today();
+      if (!records[t]) {
+        records[t] = { n: fairRandom(), saved: false };
+        fresh = true;
+        await persist(t); // 先存再播動畫：中途關掉也不能重抽
+        await animate(records[t].n);
+        haptic('notify', 'success');
+      }
+    } catch (e) {
+      if (fresh) delete records[t];
+      tell('儲存失敗，請檢查網路後再試一次');
+    } finally {
+      busy = false;
+      render();
+    }
+  }
+
+  async function markSaved(date) {
+    const r = records[date];
+    if (!r || r.saved || busy) return;
+    busy = true;
+    try {
+      const msg = date === today()
+        ? `確認已經把 RM ${r.n} 轉進存錢帳戶了嗎？`
+        : `確認已補存 ${md(date)} 的 RM ${r.n}？`;
+      if (!(await ask(msg))) return;
+      r.saved = true;
+      try {
+        await persist(date);
+        haptic('notify', 'success');
+      } catch (e) {
+        r.saved = false;
+        tell('儲存失敗，請檢查網路後再試一次');
+      }
+    } finally {
+      busy = false;
+      render();
+    }
+  }
+
+  btn.addEventListener('click', () => {
+    if (busy) return;
+    const r = records[today()];
+    if (!r) roll();
+    else if (!r.saved) markSaved(today());
+  });
+  $('list').addEventListener('click', e => {
+    const b = e.target.closest('[data-date]');
+    if (b) markSaved(b.dataset.date);
+  });
+
+  // ---------- 畫面 ----------
+  function setHero(label, n, sub) {
+    $('heroLabel').textContent = label;
+    num.textContent = n;
+    $('heroSub').textContent = sub;
+  }
+
+  function renderHero() {
+    const r = records[today()];
+    hero.classList.toggle('done', !!(r && r.saved));
+    if (!loaded) return;
+    if (!r) {
+      hero.classList.remove('landed');
+      setHero('今天的數字', '?', '點下面的按鈕，抽出今天要存的金額');
+      btn.hidden = false; btn.disabled = false; btn.className = 'btn'; btn.textContent = '抽今天的數字 🎲';
+    } else if (!r.saved) {
+      setHero('今天要存', r.n, '轉帳到存錢帳戶後，按下面確認');
+      btn.hidden = false; btn.disabled = false; btn.className = 'btn ok'; btn.textContent = '我已經存了 ✅';
+    } else {
+      setHero('今天已存', r.n, '✅ 完成！明天早上再來');
+      btn.hidden = true;
+    }
+  }
+
+  function streak() {
+    const d = new Date();
+    if (!(records[ymd(d)] && records[ymd(d)].saved)) d.setDate(d.getDate() - 1); // 今天還沒存不算斷
+    let n = 0;
+    while (records[ymd(d)] && records[ymd(d)].saved) { n++; d.setDate(d.getDate() - 1); }
+    return n;
+  }
+
+  function render() {
+    const t = today(), td = parse(t);
+    $('date').textContent = `${md(t)} · 週${WEEK[td.getDay()]}`;
+    if (busy) return;
+    renderHero();
+    if (!loaded) return;
+
+    const days = Object.keys(records).sort().reverse();
+    const thisMonth = t.slice(0, 7);
+    let total = 0, month = 0, savedDays = 0, owed = 0, owedDays = 0;
+    for (const d of days) {
+      const r = records[d];
+      if (r.saved) { total += r.n; savedDays++; if (d.startsWith(thisMonth)) month += r.n; }
+      else if (d !== t) { owed += r.n; owedDays++; }
+    }
+    $('sTotal').textContent = rm(total);
+    $('sMonth').textContent = rm(month);
+    $('sStreak').textContent = `${streak()} 天`;
+    $('sDays').textContent = `${savedDays} 天`;
+    $('owed').hidden = !owedDays;
+    $('owed').textContent = `之前有 ${owedDays} 天、共 ${rm(owed)} 抽了還沒存，可以在下面按「補存」`;
+
+    const list = $('list');
+    if (!days.length) {
+      list.innerHTML = '<div class="group empty">還沒有紀錄，今天就開始吧 🐷</div>';
+      return;
+    }
+    const groups = new Map();
+    for (const d of days) {
+      const m = d.slice(0, 7);
+      if (!groups.has(m)) groups.set(m, []);
+      groups.get(m).push(d);
+    }
+    let html = '';
+    for (const [m, ds] of groups) {
+      const [y, mo] = m.split('-').map(Number);
+      const sum = ds.reduce((s, d) => s + (records[d].saved ? records[d].n : 0), 0);
+      html += `<div class="mhead"><span>${y}年${mo}月</span><span>已存 ${rm(sum)}</span></div><div class="group">`;
+      for (const d of ds) {
+        const r = records[d];
+        const tag = r.saved ? '<span class="tag ok">已存</span>'
+          : d === t ? '<span class="tag wait">待存</span>'
+          : `<button class="tag fix" data-date="${d}">補存</button>`;
+        html += `<div class="row"><div class="d">${md(d)}<small>週${WEEK[parse(d).getDay()]}</small></div>`
+          + `<div class="n">RM ${r.n}</div>${tag}</div>`;
+      }
+      html += '</div>';
+    }
+    list.innerHTML = html;
+  }
+
+  // 從背景切回來時重新讀取（可能在別的裝置操作過），過了午夜也會換成新的一天
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && loaded && !busy) load().then(render, render);
+  });
+  let shownDay = today();
+  setInterval(() => { if (today() !== shownDay) { shownDay = today(); render(); } }, 30000);
+
+  (async () => {
+    render();
+    try {
+      await load();
+      loaded = true;
+      render();
+    } catch (e) {
+      $('heroSub').textContent = '讀取資料失敗，請關掉再打開一次';
+    }
+  })();
+})();
+</script>
+</body>
+</html>
