@@ -3,123 +3,304 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<title>每日存錢</title>
+<title>STACK50</title>
+<meta name="theme-color" content="#07090a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  /* 在 Telegram 裡會自動套用使用者的主題色；瀏覽器預覽時用後面的預設值 */
+  /* STACK50 品牌色：黑底 + 霓虹綠（固定深色，不跟 Telegram 主題） */
   :root {
-    --page: var(--tg-theme-secondary-bg-color, #f1f2f6);
-    --card: var(--tg-theme-section-bg-color, var(--tg-theme-bg-color, #ffffff));
-    --text: var(--tg-theme-text-color, #14171a);
-    --hint: var(--tg-theme-hint-color, #8b919a);
-    --head: var(--tg-theme-section-header-text-color, var(--tg-theme-hint-color, #6d7885));
-    --sep: var(--tg-theme-section-separator-color, rgba(128, 128, 128, .18));
-    --accent: var(--tg-theme-button-color, #2aabee);
-    --accent-text: var(--tg-theme-button-text-color, #ffffff);
-    --ok: #20a058;
-    --ok-soft: rgba(32, 160, 88, .14);
-    --pending: #c77c02;
-    --pending-soft: rgba(230, 150, 20, .16);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --page: var(--tg-theme-secondary-bg-color, #0f1720);
-      --card: var(--tg-theme-section-bg-color, var(--tg-theme-bg-color, #1c2733));
-      --text: var(--tg-theme-text-color, #f2f4f7);
-      --hint: var(--tg-theme-hint-color, #7d8b99);
-      --head: var(--tg-theme-section-header-text-color, var(--tg-theme-hint-color, #7d8b99));
-      --accent: var(--tg-theme-button-color, #3e8fd8);
-      --ok: #3bcf7c;
-      --ok-soft: rgba(59, 207, 124, .16);
-      --pending: #f0b429;
-      --pending-soft: rgba(240, 180, 41, .16);
-    }
+    --bg: #07090a;
+    --surface: #111513;
+    --surface-2: #181d1a;
+    --line: #232a26;
+    --text: #f1f5f2;
+    --text-2: #b4bdb8;
+    --muted: #7c8781;
+    --neon: #39f58a;
+    --neon-ink: #04130a;
+    --neon-soft: rgba(57, 245, 138, .12);
+    --neon-track: #16301f;
+    --amber: #ffb547;
+    --amber-soft: rgba(255, 181, 71, .13);
+    --danger: #ff6b6b;
+    /* 熱力圖：單一綠色，數字越大越亮（已驗證對比與階差） */
+    --h1: #1e774a; --h2: #25965d; --h3: #2cb46e; --h4: #33d37e; --h5: #39f58a;
+    --font: "Space Grotesk", -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    color-scheme: dark;
   }
 
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
-  html, body { margin: 0; }
+  html, body { margin: 0; background: var(--bg); }
   body {
-    background: var(--page);
     color: var(--text);
-    font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    font: 16px/1.45 var(--font);
     -webkit-font-smoothing: antialiased;
     -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
   }
-  main { max-width: 480px; margin: 0 auto; padding: 16px 16px calc(28px + env(safe-area-inset-bottom)); }
+  button { font: inherit; color: inherit; }
+  main { max-width: 480px; margin: 0 auto; padding: 14px 16px calc(96px + env(safe-area-inset-bottom)); }
+  .muted { color: var(--muted); }
 
-  header { display: flex; align-items: baseline; justify-content: space-between; margin: 4px 4px 14px; }
-  .title { font-size: 22px; font-weight: 700; }
-  .date { color: var(--hint); font-size: 14px; }
+  /* ---------- header ---------- */
+  .top { display: flex; align-items: center; justify-content: space-between; margin: 2px 2px 14px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand svg { width: 38px; height: 38px; filter: drop-shadow(0 0 10px rgba(57, 245, 138, .35)); }
+  .wordmark { font-size: 21px; font-weight: 700; letter-spacing: .04em; line-height: 1.1; }
+  .wordmark b { color: var(--neon); font-weight: 700; }
+  .tagline { font-size: 12px; color: var(--muted); letter-spacing: .08em; }
+  .today { text-align: right; line-height: 1.25; }
+  .today .d { font-weight: 600; }
+  .today .w { font-size: 12px; color: var(--muted); }
 
-  .hero { background: var(--card); border-radius: 20px; padding: 26px 20px 20px; text-align: center; }
-  .hero .label { color: var(--hint); font-size: 14px; }
-  .amount { display: flex; justify-content: center; align-items: baseline; gap: 6px; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
-  .amount .cur { font-size: 22px; font-weight: 600; color: var(--hint); }
-  #num { font-size: 80px; font-weight: 800; line-height: 1.05; letter-spacing: -0.02em; min-width: 2ch; }
-  .hero.rolling #num { color: var(--accent); }
-  .hero.done #num { color: var(--ok); }
-  .hero.landed #num { animation: pop .45s cubic-bezier(.2, 1.6, .4, 1); }
-  @keyframes pop { from { transform: scale(.7); } to { transform: scale(1); } }
-  .sub { color: var(--hint); font-size: 14px; min-height: 1.45em; margin: 6px 0 18px; }
-  .hero.done .sub { color: var(--ok); font-weight: 600; margin-bottom: 4px; }
+  /* ---------- hero ---------- */
+  .hero {
+    position: relative; overflow: hidden;
+    background: radial-gradient(120% 90% at 50% 0%, rgba(57, 245, 138, .10), transparent 60%), var(--surface);
+    border: 1px solid var(--line); border-radius: 24px;
+    padding: 18px 20px 20px; text-align: center;
+  }
+  .hero-top { display: flex; justify-content: space-between; align-items: center; }
+  .chip { font-size: 12px; font-weight: 600; letter-spacing: .06em; color: var(--text-2); background: var(--surface-2); border: 1px solid var(--line); padding: 4px 10px; border-radius: 999px; }
+  .chip.fire { color: var(--amber); }
+  .reel-wrap { display: flex; justify-content: center; align-items: center; gap: 8px; margin: 14px 0 6px; }
+  .reel-wrap .cur { font-size: 22px; font-weight: 600; color: var(--muted); align-self: flex-end; margin-bottom: 18px; }
+  .reel { height: 100px; overflow: hidden; min-width: 1.3em; font-size: 88px; font-weight: 700; letter-spacing: -.03em;
+    -webkit-mask-image: linear-gradient(transparent, #000 18%, #000 82%, transparent); mask-image: linear-gradient(transparent, #000 18%, #000 82%, transparent); }
+  .strip > div { height: 100px; line-height: 100px; }
+  .hero.idle .strip > div { color: var(--muted); animation: breathe 2.4s ease-in-out infinite; }
+  @keyframes breathe { 50% { opacity: .45; } }
+  .hero.rolling .reel { color: var(--text); }
+  .hero.landed .strip > div, .hero.done .strip > div { color: var(--neon); text-shadow: 0 0 28px rgba(57, 245, 138, .45); }
+  .hero.landed .reel { animation: pop .5s cubic-bezier(.2, 1.6, .4, 1); }
+  @keyframes pop { from { transform: scale(.82); } to { transform: scale(1); } }
+  .hero-msg { font-size: 14px; color: var(--text-2); min-height: 2.9em; margin: 0 8px 14px; display: flex; align-items: center; justify-content: center; }
+  .hero.done .hero-msg { color: var(--neon); font-weight: 600; margin-bottom: 2px; min-height: 1.45em; }
+  .countdown { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
   .btn {
-    display: block; width: 100%; border: 0; border-radius: 14px; padding: 15px;
-    font: inherit; font-size: 17px; font-weight: 600; cursor: pointer;
-    background: var(--accent); color: var(--accent-text);
+    position: relative; overflow: hidden; display: block; width: 100%; border: 0; border-radius: 16px; padding: 16px;
+    font-size: 17px; font-weight: 700; letter-spacing: .02em; cursor: pointer;
+    background: var(--neon); color: var(--neon-ink);
+    box-shadow: 0 8px 28px rgba(57, 245, 138, .28);
     transition: transform .08s, opacity .15s;
   }
-  .btn.ok { background: var(--ok); color: #fff; }
-  .btn:disabled { opacity: .5; cursor: default; }
+  .btn::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .45) 50%, transparent 70%); transform: translateX(-120%); animation: shine 3.2s ease-in-out infinite; }
+  @keyframes shine { 60%, 100% { transform: translateX(120%); } }
+  .btn.confirm { background: var(--text); color: var(--bg); box-shadow: none; }
+  .btn.confirm::after { display: none; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn:disabled::after { display: none; }
   .btn:active:not(:disabled) { transform: scale(.98); }
+  .btn-ghost { border: 1px solid var(--line); background: var(--surface-2); border-radius: 12px; padding: 10px 14px; font-weight: 600; font-size: 14px; cursor: pointer; }
+  .btn-ghost:active { transform: scale(.98); }
+
+  /* ---------- cards ---------- */
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 16px; margin-top: 12px; }
+  .k { font-size: 12px; color: var(--muted); letter-spacing: .04em; }
+
+  .goal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .goal-name { font-size: 17px; font-weight: 700; margin-top: 1px; word-break: break-all; }
+  .goal-nums { display: flex; align-items: baseline; gap: 6px; margin: 12px 0 8px; }
+  .goal-nums .big { font-size: 26px; font-weight: 700; }
+  .goal-nums .pct { margin-left: auto; font-weight: 700; color: var(--neon); }
+  .meter { height: 10px; border-radius: 999px; background: var(--neon-track); overflow: hidden; }
+  .meter > div { height: 100%; border-radius: 999px; background: var(--neon); box-shadow: 0 0 14px rgba(57, 245, 138, .5); transition: width .8s cubic-bezier(.2, .8, .2, 1); }
+  .goal-eta { font-size: 13px; color: var(--text-2); margin-top: 10px; }
+  .goal-empty { display: flex; align-items: center; gap: 14px; }
+  .goal-empty .ico { font-size: 28px; }
+  .goal-empty .txt { flex: 1; }
+  .goal-empty .t { font-weight: 700; }
+  .goal-empty .s { font-size: 13px; color: var(--muted); }
+  .goal-done { text-align: center; }
+  .goal-done .t { font-size: 17px; font-weight: 700; margin: 4px 0 2px; }
+  .goal-done .btn-ghost { margin-top: 12px; }
 
   .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
-  .stat { background: var(--card); border-radius: 16px; padding: 14px 16px; }
-  .stat .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
-  .stat .k { color: var(--hint); font-size: 13px; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; }
+  .stat .v { font-size: 24px; font-weight: 700; line-height: 1.2; white-space: nowrap; }
+  .stat .v small { font-size: 14px; font-weight: 600; color: var(--muted); margin-left: 2px; }
 
-  .owed { margin-top: 12px; padding: 11px 14px; border-radius: 14px; background: var(--pending-soft); color: var(--pending); font-size: 14px; }
+  .owed { display: flex; gap: 10px; align-items: center; margin-top: 12px; padding: 12px 14px; border-radius: 16px; background: var(--amber-soft); color: var(--amber); font-size: 14px; }
 
-  .mhead { display: flex; justify-content: space-between; margin: 22px 16px 6px; font-size: 13px; font-weight: 600; color: var(--head); }
-  .group { background: var(--card); border-radius: 16px; overflow: hidden; }
+  /* ---------- tabs ---------- */
+  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin: 22px 0 12px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+  .tabs button { border: 0; background: none; padding: 9px 0; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; }
+  .tabs button.on { background: var(--surface-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--line); }
+  .tabs .badge { font-size: 11px; color: var(--neon); margin-left: 2px; }
+
+  /* ---------- calendar ---------- */
+  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .cal-head .title { font-weight: 700; }
+  .nav { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); font-size: 18px; line-height: 1; cursor: pointer; }
+  .nav:disabled { opacity: .3; cursor: default; }
+  .cal-week, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+  .cal-week { font-size: 11px; color: var(--muted); text-align: center; margin-bottom: 6px; }
+  .cell { aspect-ratio: 1; border: 0; border-radius: 9px; padding: 0; font-size: 13px; font-weight: 600; background: var(--surface-2); color: var(--muted); cursor: pointer; position: relative; }
+  .cell.future { background: transparent; color: #3b443f; cursor: default; }
+  .cell.blank { visibility: hidden; }
+  .cell.l1 { background: var(--h1); color: #fff; }
+  .cell.l2 { background: var(--h2); color: #fff; }
+  .cell.l3 { background: var(--h3); color: var(--neon-ink); }
+  .cell.l4 { background: var(--h4); color: var(--neon-ink); }
+  .cell.l5 { background: var(--h5); color: var(--neon-ink); box-shadow: 0 0 12px rgba(57, 245, 138, .45); }
+  .cell.pending { background: var(--amber-soft); color: var(--amber); box-shadow: inset 0 0 0 2px var(--amber); }
+  .cell.is-today::after { content: ""; position: absolute; left: 50%; bottom: 4px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: currentColor; }
+  .cell.sel { outline: 2px solid var(--text); outline-offset: 2px; }
+  .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 12px; font-size: 12px; color: var(--muted); }
+  .legend .ramp { display: inline-flex; gap: 3px; margin: 0 4px; vertical-align: middle; }
+  .legend .ramp i, .legend .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: middle; }
+  .legend .sw.pending { background: var(--amber-soft); box-shadow: inset 0 0 0 2px var(--amber); }
+  .legend .sw.saved { background: var(--neon); }
+  .readout { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; margin-top: 12px; padding: 10px 14px; border-radius: 14px; background: var(--surface-2); font-size: 14px; color: var(--text-2); }
+  .readout b { color: var(--text); }
+
+  /* ---------- stats / charts ---------- */
+  .figs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .fig { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; }
+  .fig .v { font-size: 20px; font-weight: 700; }
+  .fig .d { font-size: 12px; color: var(--muted); }
+  .chart h3 { margin: 0; font-size: 15px; }
+  .chart .sub { font-size: 12px; color: var(--muted); margin: 2px 0 10px; }
+  .chart svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
+  .chart .axis { font-size: 10px; fill: var(--muted); font-family: var(--font); font-variant-numeric: tabular-nums; }
+  .chart .lbl { font-size: 11px; fill: var(--text); font-weight: 600; font-family: var(--font); }
+  .chart .grid { stroke: var(--line); stroke-width: 1; }
+  .chart .dim { opacity: .35; }
+  .empty-chart { padding: 26px 10px; text-align: center; color: var(--muted); font-size: 13px; }
+  .dex { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
+  .dex button { aspect-ratio: 1; border: 0; border-radius: 7px; padding: 0; font-size: 11px; font-weight: 600; background: var(--surface-2); color: #4a5550; cursor: pointer; }
+  .dex button.got { background: var(--neon-soft); color: var(--neon); box-shadow: inset 0 0 0 1px rgba(57, 245, 138, .45); }
+  .dex button.sel { outline: 2px solid var(--text); outline-offset: 1px; }
+
+  /* ---------- achievements ---------- */
+  .ach-sum { display: flex; justify-content: space-between; align-items: baseline; margin: 0 4px 10px; }
+  .ach-sum b { font-size: 20px; }
+  .ach-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .ach { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 8px 12px; text-align: center; }
+  .ach .ico { width: 52px; height: 52px; margin: 0 auto 8px; border-radius: 50%; display: grid; place-items: center; font-size: 26px; background: var(--surface-2); }
+  .ach.on .ico { background: var(--neon-soft); box-shadow: 0 0 0 2px var(--neon), 0 0 18px rgba(57, 245, 138, .35); }
+  .ach:not(.on) .ico { filter: grayscale(1); opacity: .45; }
+  .ach .t { font-size: 13px; font-weight: 700; }
+  .ach .s { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.35; }
+  .ach .p { height: 4px; border-radius: 99px; background: var(--surface-2); margin: 8px 6px 0; overflow: hidden; }
+  .ach .p > div { height: 100%; background: var(--muted); border-radius: 99px; }
+
+  /* ---------- history ---------- */
+  .mhead { display: flex; justify-content: space-between; margin: 18px 6px 6px; font-size: 13px; font-weight: 600; color: var(--muted); }
+  .mhead:first-child { margin-top: 0; }
+  .group { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
   .row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
-  .row + .row { border-top: 1px solid var(--sep); }
+  .row + .row { border-top: 1px solid var(--line); }
   .row .d { flex: 1; }
-  .row .d small { color: var(--hint); margin-left: 8px; font-size: 13px; }
-  .row .n { font-weight: 600; font-variant-numeric: tabular-nums; }
-  .tag { min-width: 48px; padding: 4px 10px; border: 0; border-radius: 999px; font: inherit; font-size: 12px; font-weight: 600; text-align: center; }
-  .tag.ok { background: var(--ok-soft); color: var(--ok); }
-  .tag.wait { background: var(--pending-soft); color: var(--pending); }
-  .tag.fix { background: var(--accent); color: var(--accent-text); cursor: pointer; }
-  .empty { margin-top: 22px; padding: 24px; text-align: center; color: var(--hint); font-size: 14px; }
+  .row .d small { color: var(--muted); margin-left: 8px; font-size: 12px; }
+  .row .n { font-weight: 700; }
+  .tag { min-width: 52px; padding: 5px 10px; border: 0; border-radius: 999px; font-size: 12px; font-weight: 700; text-align: center; }
+  .tag.ok { background: var(--neon-soft); color: var(--neon); }
+  .tag.wait { background: var(--amber-soft); color: var(--amber); }
+  .tag.fix { background: var(--amber); color: #1d1300; cursor: pointer; }
+  .empty { padding: 26px; text-align: center; color: var(--muted); font-size: 14px; }
 
-  .foot { margin-top: 26px; text-align: center; color: var(--hint); font-size: 12px; }
+  .foot { margin-top: 26px; text-align: center; color: var(--muted); font-size: 12px; }
+
+  /* ---------- snackbar ---------- */
+  .snack {
+    position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    width: min(448px, calc(100% - 32px)); z-index: 30; overflow: hidden;
+    display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px;
+    background: #1f2622; border: 1px solid #2d3631; box-shadow: 0 12px 40px rgba(0, 0, 0, .5);
+    animation: up .25s ease-out;
+  }
+  @keyframes up { from { transform: translate(-50%, 20px); opacity: 0; } }
+  .snack span { flex: 1; font-size: 14px; }
+  .snack button { border: 0; background: none; color: var(--neon); font-weight: 700; font-size: 15px; padding: 4px 6px; cursor: pointer; }
+  .snack .timer { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--neon); animation: timer linear forwards; }
+  @keyframes timer { from { width: 100%; } to { width: 0; } }
+
+  /* ---------- modal ---------- */
+  .modal { position: fixed; inset: 0; z-index: 40; background: rgba(0, 0, 0, .6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: flex-start; padding: 12vh 16px 16px; animation: fade .2s; }
+  @keyframes fade { from { opacity: 0; } }
+  .sheet { width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 20px; animation: rise .25s cubic-bezier(.2, .9, .3, 1); }
+  @keyframes rise { from { transform: translateY(16px) scale(.98); opacity: 0; } }
+  .sheet h3 { margin: 0 0 14px; font-size: 18px; }
+  .sheet label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+  .sheet input { display: block; width: 100%; margin-top: 6px; padding: 13px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); font: inherit; font-size: 16px; outline: none; }
+  .sheet input:focus { border-color: var(--neon); }
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; margin: -4px 0 12px; }
+  .presets button { border: 1px solid var(--line); background: var(--surface-2); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .sheet .hint { font-size: 13px; color: var(--text-2); min-height: 1.45em; margin-bottom: 16px; }
+  .sheet-actions { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; }
+  .sheet-actions .btn { padding: 13px; font-size: 16px; }
+  .sheet-actions .btn-ghost { padding: 13px; font-size: 16px; }
+  .link-danger { display: block; margin: 14px auto 0; border: 0; background: none; color: var(--danger); font-size: 14px; cursor: pointer; }
+  .unlock { text-align: center; }
+  .unlock .ico { width: 88px; height: 88px; margin: 6px auto 12px; border-radius: 50%; display: grid; place-items: center; font-size: 44px; background: var(--neon-soft); box-shadow: 0 0 0 3px var(--neon), 0 0 40px rgba(57, 245, 138, .45); animation: pop .5s cubic-bezier(.2, 1.6, .4, 1); }
+  .unlock .k { color: var(--neon); font-weight: 700; letter-spacing: .12em; }
+  .unlock .t { font-size: 22px; font-weight: 700; margin: 4px 0; }
+  .unlock .s { color: var(--text-2); font-size: 14px; margin-bottom: 18px; }
+
+  #fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
 </style>
 </head>
 <body>
 <main>
-  <header>
-    <div class="title">每日存錢 🐷</div>
-    <div class="date" id="date"></div>
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 40 40" aria-hidden="true">
+        <defs>
+          <linearGradient id="coin" x1="0" x2="1"><stop offset="0" stop-color="#8e9892"/><stop offset=".5" stop-color="#eef2ef"/><stop offset="1" stop-color="#7d8781"/></linearGradient>
+        </defs>
+        <g stroke="#07090a" stroke-width="1.2">
+          <rect x="7" y="25" width="26" height="7" rx="2" fill="url(#coin)"/><ellipse cx="20" cy="25" rx="13" ry="4" fill="#dfe5e1"/>
+          <rect x="9" y="17" width="22" height="7" rx="2" fill="url(#coin)"/><ellipse cx="20" cy="17" rx="11" ry="3.5" fill="#dfe5e1"/>
+          <rect x="11" y="9" width="18" height="7" rx="2" fill="url(#coin)"/><ellipse cx="20" cy="9" rx="9" ry="3" fill="#39f58a"/>
+        </g>
+        <path d="M5 30 C 10 36, 30 36, 35 29" fill="none" stroke="#39f58a" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="wordmark">STACK<b>50</b></div>
+        <div class="tagline">每日存錢挑戰</div>
+      </div>
+    </div>
+    <div class="today"><div class="d" id="dateMain"></div><div class="w" id="dateWeek"></div></div>
   </header>
 
-  <section class="hero" id="hero">
-    <div class="label" id="heroLabel">今天的數字</div>
-    <div class="amount"><span class="cur">RM</span><span id="num">…</span></div>
-    <div class="sub" id="heroSub">載入中…</div>
+  <section class="hero idle" id="hero">
+    <div class="hero-top">
+      <span class="chip" id="heroChip">今天的數字</span>
+      <span class="chip fire" id="heroStreak" hidden></span>
+    </div>
+    <div class="reel-wrap"><span class="cur">RM</span><div class="reel"><div class="strip" id="strip"><div>…</div></div></div></div>
+    <div class="hero-msg" id="heroMsg">載入中…</div>
     <button class="btn" id="action" disabled>載入中…</button>
+    <div class="countdown" id="countdown" hidden></div>
   </section>
+
+  <section class="card" id="goal" hidden></section>
 
   <section class="stats">
     <div class="stat"><div class="v" id="sTotal">RM 0</div><div class="k">累積已存</div></div>
     <div class="stat"><div class="v" id="sMonth">RM 0</div><div class="k">本月已存</div></div>
-    <div class="stat"><div class="v" id="sStreak">0 天</div><div class="k">連續存錢</div></div>
-    <div class="stat"><div class="v" id="sDays">0 天</div><div class="k">總共存了</div></div>
+    <div class="stat"><div class="v" id="sStreak">0<small>天</small></div><div class="k">🔥 目前連續</div></div>
+    <div class="stat"><div class="v" id="sBest">0<small>天</small></div><div class="k">最長連續</div></div>
   </section>
   <div class="owed" id="owed" hidden></div>
 
-  <section id="list"></section>
+  <nav class="tabs" id="tabs">
+    <button data-tab="cal">日曆</button>
+    <button data-tab="stats">統計</button>
+    <button data-tab="ach">成就</button>
+    <button data-tab="log">紀錄</button>
+  </nav>
+  <section id="panel"></section>
 
   <p class="foot">
     每天從 1–50 隨機抽一個整數，每個數字機率都是 2%。<br>一天只能抽一次，抽了就要存 💪
@@ -127,47 +308,73 @@
   </p>
 </main>
 
+<div class="snack" id="snack" hidden><span id="snackText"></span><button id="snackUndo">撤銷</button><div class="timer" id="snackTimer"></div></div>
+
+<div class="modal" id="goalModal" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="goalTitle">
+    <h3 id="goalTitle">存錢目標</h3>
+    <label>要存來做什麼？<input id="gName" maxlength="20" placeholder="例如：新手機、旅行" autocomplete="off"></label>
+    <label>目標金額（RM）<input id="gAmt" inputmode="numeric" pattern="[0-9]*" placeholder="1000" autocomplete="off"></label>
+    <div class="presets" id="gPresets">
+      <button data-amt="500">500</button><button data-amt="1000">1,000</button><button data-amt="3000">3,000</button><button data-amt="5000">5,000</button><button data-amt="10000">10,000</button>
+    </div>
+    <div class="hint" id="gHint"></div>
+    <div class="sheet-actions"><button class="btn-ghost" data-close>取消</button><button class="btn" id="gSave">儲存</button></div>
+    <button class="link-danger" id="gDelete" hidden>刪除目標</button>
+  </div>
+</div>
+
+<div class="modal" id="unlockModal" hidden>
+  <div class="sheet unlock">
+    <div class="k" id="uKicker">解鎖成就</div>
+    <div class="ico" id="uIco"></div>
+    <div class="t" id="uTitle"></div>
+    <div class="s" id="uDesc"></div>
+    <button class="btn" id="uOk">太好了</button>
+  </div>
+</div>
+
+<canvas id="fx"></canvas>
+
 <script>
 (() => {
   'use strict';
-  const MIN = 1, MAX = 50;
+  const MIN = 1, MAX = 50, EXPECTED = 25.5;
   const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
   const $ = id => document.getElementById(id);
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // ---------- Telegram ----------
   const tg = window.Telegram && window.Telegram.WebApp;
   const inTG = !!(tg && tg.initData);
   const can = v => !!(inTG && tg.isVersionAtLeast(v));
-
   if (inTG) {
     tg.ready();
     tg.expand();
     try {
-      if (can('6.1')) { tg.setHeaderColor('secondary_bg_color'); tg.setBackgroundColor('secondary_bg_color'); }
+      if (can('6.1')) tg.setBackgroundColor('#07090a');
+      if (can('6.9')) tg.setHeaderColor('#07090a'); else if (can('6.1')) tg.setHeaderColor('bg_color');
+      if (can('7.10')) tg.setBottomBarColor('#07090a');
       if (can('7.7')) tg.disableVerticalSwipes();
     } catch (e) { /* 舊版 Telegram 不支援就算了 */ }
   } else {
     $('mode').hidden = false;
   }
-
   function haptic(kind, arg) {
     if (!can('6.1')) return;
     const h = tg.HapticFeedback;
     if (kind === 'tick') h.selectionChanged();
+    else if (kind === 'impact') h.impactOccurred(arg || 'light');
     else h.notificationOccurred(arg || 'success');
   }
-  const ask = msg => can('6.2')
-    ? new Promise(res => tg.showConfirm(msg, ok => res(!!ok)))
-    : Promise.resolve(window.confirm(msg));
   const tell = msg => can('6.2') ? tg.showAlert(msg) : window.alert(msg);
 
   // ---------- 儲存：Telegram CloudStorage（跨裝置同步），瀏覽器預覽時用 localStorage ----------
-  // 每個月一個 key，例如 "m-2026-09" → {"30":[23,1]}（[金額, 是否已存]）
+  // "m-2026-09" → {"30":[23,1]}（[金額, 是否已存]）；"goals" → {cur:{name,amt}|null, done:[{name,amt,date}]}
   const useCloud = can('6.9');
   const LS = 'savejar:';
   const cloud = (method, ...args) => new Promise((resolve, reject) =>
     tg.CloudStorage[method](...args, (err, res) => err ? reject(err) : resolve(res)));
-
   const store = {
     async keys() {
       if (useCloud) return cloud('getKeys');
@@ -184,11 +391,13 @@
     },
   };
 
-  let records = {}; // "YYYY-MM-DD" → { n, saved }
+  let records = {};                       // "YYYY-MM-DD" → { n, saved }
+  let goals = { cur: null, done: [] };
 
   async function load() {
-    const keys = (await store.keys()).filter(k => /^m-\d{4}-\d{2}$/.test(k));
-    const vals = await store.getMany(keys);
+    const all = await store.keys();
+    const keys = all.filter(k => /^m-\d{4}-\d{2}$/.test(k));
+    const vals = await store.getMany(all.includes('goals') ? [...keys, 'goals'] : keys);
     const next = {};
     for (const k of keys) {
       let obj;
@@ -200,8 +409,11 @@
       }
     }
     records = next;
+    try {
+      const g = JSON.parse(vals.goals || 'null');
+      goals = { cur: g && g.cur && g.cur.amt > 0 ? g.cur : null, done: Array.isArray(g && g.done) ? g.done : [] };
+    } catch (e) { goals = { cur: null, done: [] }; }
   }
-
   async function persist(date) {
     const month = date.slice(0, 7), obj = {};
     for (const [d, r] of Object.entries(records)) {
@@ -209,17 +421,22 @@
     }
     await store.set('m-' + month, JSON.stringify(obj));
   }
+  const persistGoals = () => store.set('goals', JSON.stringify(goals));
 
-  // ---------- 日期 ----------
+  // ---------- 日期 / 格式 ----------
   const pad = n => String(n).padStart(2, '0');
   const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
   const today = () => ymd(new Date());
+  const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return ymd(d); };
   const md = s => { const d = parse(s); return `${d.getMonth() + 1}月${d.getDate()}日`; };
-  const rm = n => `RM ${n.toLocaleString('en-MY')}`;
+  const wk = s => '週' + WEEK[parse(s).getDay()];
+  const daysIn = (y, m) => new Date(y, m, 0).getDate();   // m: 1–12
+  const money = n => n.toLocaleString('en-MY', { maximumFractionDigits: 1 });
+  const rm = n => `RM ${money(n)}`;
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  // ---------- 抽數字：1–50 完全平均 ----------
-  // 用加密等級亂數 + 拒絕取樣，避免取餘數造成的些微偏差
+  // ---------- 1–50 完全平均：加密等級亂數 + 拒絕取樣 ----------
   function fairRandom() {
     const range = MAX - MIN + 1;
     const limit = Math.floor(0x100000000 / range) * range;
@@ -228,49 +445,152 @@
     return MIN + (buf[0] % range);
   }
 
-  const hero = $('hero'), btn = $('action'), num = $('num');
-  let loaded = false, busy = false;
+  // ---------- 統計 ----------
+  function derive() {
+    const t = today(), thisMonth = t.slice(0, 7);
+    const dates = Object.keys(records).sort();
+    const s = { t, dates, total: 0, month: 0, savedDays: 0, owed: 0, owedDays: 0, drawn: new Map(),
+      max: 0, min: 0, rolls: 0, sumRolls: 0, monthly: new Map(), cum: [], best: 0, cur: 0, fullMonth: false };
+    let run = 0, prev = null;
+    for (const d of dates) {
+      const r = records[d];
+      s.rolls++; s.sumRolls += r.n;
+      s.drawn.set(r.n, (s.drawn.get(r.n) || 0) + 1);
+      s.max = Math.max(s.max, r.n);
+      s.min = s.min ? Math.min(s.min, r.n) : r.n;
+      if (r.saved) {
+        s.total += r.n; s.savedDays++;
+        if (d.startsWith(thisMonth)) s.month += r.n;
+        s.monthly.set(d.slice(0, 7), (s.monthly.get(d.slice(0, 7)) || 0) + r.n);
+        s.cum.push([d, s.total]);
+        run = prev && addDays(prev, 1) === d ? run + 1 : 1;
+        prev = d;
+        s.best = Math.max(s.best, run);
+      } else if (d !== t) { s.owed += r.n; s.owedDays++; }
+    }
+    // 目前連續：今天還沒存不算斷
+    let d = records[t] && records[t].saved ? t : addDays(t, -1);
+    while (records[d] && records[d].saved) { s.cur++; d = addDays(d, -1); }
+    // 全勤月：某個月每天都有存
+    for (const m of new Set(dates.map(x => x.slice(0, 7)))) {
+      const [y, mo] = m.split('-').map(Number), n = daysIn(y, mo);
+      let ok = true;
+      for (let i = 1; i <= n && ok; i++) ok = !!(records[`${m}-${pad(i)}`] && records[`${m}-${pad(i)}`].saved);
+      if (ok) s.fullMonth = true;
+    }
+    const used = goals.done.reduce((a, g) => a + g.amt, 0);
+    s.goalProgress = Math.max(0, s.total - used);
+    s.goalReached = !!(goals.cur && s.goalProgress >= goals.cur.amt);
+    return s;
+  }
 
-  // 滾動動畫只是視覺效果，結果在動畫開始前就已經決定並存好了
-  function animate(final) {
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { num.textContent = final; return Promise.resolve(); }
-    $('heroLabel').textContent = '抽獎中…';
-    $('heroSub').textContent = '　';
-    hero.classList.add('rolling');
-    return new Promise(done => {
-      let delay = 40, elapsed = 0;
-      const tick = () => {
-        elapsed += delay;
-        if (elapsed > 1500) {
-          num.textContent = final;
-          hero.classList.remove('rolling');
-          hero.classList.add('landed');
-          return done();
-        }
-        let r;
-        do r = MIN + Math.floor(Math.random() * (MAX - MIN + 1)); while (String(r) === num.textContent);
-        num.textContent = r;
-        haptic('tick');
-        delay *= 1.12;
-        setTimeout(tick, delay);
-      };
-      tick();
-    });
+  // ---------- 成就 ----------
+  const ACH = [
+    { id: 'first', ico: '🐣', t: '第一步', s: '完成第一次存錢', v: s => [s.savedDays, 1] },
+    { id: 's3', ico: '🔥', t: '三天熱身', s: '連續存 3 天', v: s => [s.best, 3] },
+    { id: 's7', ico: '⚡', t: '一週不斷', s: '連續存 7 天', v: s => [s.best, 7] },
+    { id: 's14', ico: '💪', t: '兩週達人', s: '連續存 14 天', v: s => [s.best, 14] },
+    { id: 's30', ico: '🏅', t: '月度冠軍', s: '連續存 30 天', v: s => [s.best, 30] },
+    { id: 's100', ico: '💎', t: '百日堅持', s: '連續存 100 天', v: s => [s.best, 100] },
+    { id: 's365', ico: '👑', t: '年度傳奇', s: '連續存 365 天', v: s => [s.best, 365] },
+    { id: 'full', ico: '🌕', t: '全勤月', s: '一整個月每天都存', v: s => [s.fullMonth ? 1 : 0, 1] },
+    { id: 't100', ico: '🪙', t: '第一百', s: '累積 RM 100', v: s => [s.total, 100] },
+    { id: 't500', ico: '💵', t: '五百俱樂部', s: '累積 RM 500', v: s => [s.total, 500] },
+    { id: 't1k', ico: '💰', t: '千元達成', s: '累積 RM 1,000', v: s => [s.total, 1000] },
+    { id: 't5k', ico: '🏦', t: '五千大關', s: '累積 RM 5,000', v: s => [s.total, 5000] },
+    { id: 't10k', ico: '🚀', t: '一萬里程碑', s: '累積 RM 10,000', v: s => [s.total, 10000] },
+    { id: 'd30', ico: '📅', t: '三十天', s: '總共存 30 天', v: s => [s.savedDays, 30] },
+    { id: 'd100', ico: '🗓️', t: '一百天', s: '總共存 100 天', v: s => [s.savedDays, 100] },
+    { id: 'max', ico: '🎰', t: '滿分', s: '抽到 RM 50', v: s => [s.drawn.has(50) ? 1 : 0, 1] },
+    { id: 'min', ico: '🍀', t: '最小驚喜', s: '抽到 RM 1', v: s => [s.drawn.has(1) ? 1 : 0, 1] },
+    { id: 'dex', ico: '🧩', t: '數字收藏家', s: '1 到 50 全部抽過', v: s => [s.drawn.size, 50] },
+    { id: 'goal', ico: '🎯', t: '夢想成真', s: '達成一個存錢目標', v: s => [goals.done.length + (s.goalReached ? 1 : 0), 1] },
+  ];
+  const unlockedSet = s => new Set(ACH.filter(a => { const [c, n] = a.v(s); return c >= n; }).map(a => a.id));
+
+  // 做完一個動作後，比對前後解鎖了哪些成就，一個一個跳出來
+  let unlockQueue = [];
+  function celebrateNew(before, after) {
+    for (const a of ACH) if (after.has(a.id) && !before.has(a.id)) unlockQueue.push({ kicker: '解鎖成就', ico: a.ico, t: a.t, s: a.s });
+    showNextUnlock();
+  }
+  function showNextUnlock() {
+    if (!$('unlockModal').hidden || !$('goalModal').hidden || !unlockQueue.length) return;
+    const u = unlockQueue.shift();
+    $('uKicker').textContent = u.kicker;
+    $('uIco').textContent = u.ico;
+    $('uTitle').textContent = u.t;
+    $('uDesc').textContent = u.s;
+    openModal('unlockModal');
+    haptic('notify', 'success');
+    confetti(120);
+  }
+  $('uOk').addEventListener('click', () => { closeModal('unlockModal'); setTimeout(showNextUnlock, 250); });
+
+  // ---------- 狀態 ----------
+  const hero = $('hero'), btn = $('action'), strip = $('strip');
+  let loaded = false, busy = false;
+  let tab = 'cal';
+  try { tab = localStorage.getItem('stack50:tab') || 'cal'; } catch (e) {}
+  let calMonth = today().slice(0, 7), calSel = today();
+  let statSel = {};                                   // 每張圖表點到哪一個
+
+  // ---------- 抽獎動畫：滾輪 ----------
+  function spin(final) {
+    if (reduced) { strip.innerHTML = `<div>${final}</div>`; return Promise.resolve(); }
+    const seq = [];
+    for (let i = 0; i < 32; i++) {
+      let r;
+      do r = MIN + Math.floor(Math.random() * (MAX - MIN + 1)); while (r === seq[seq.length - 1] || (i === 31 && r === final));
+      seq.push(r);
+    }
+    seq.push(final);
+    const H = strip.firstElementChild ? strip.firstElementChild.offsetHeight || 100 : 100;
+    strip.innerHTML = seq.map(n => `<div>${n}</div>`).join('');
+    strip.style.transition = 'none';
+    strip.style.transform = 'translateY(0)';
+    void strip.offsetHeight;
+    const DUR = 2300, steps = seq.length - 1;
+    strip.style.transition = `transform ${DUR}ms cubic-bezier(.12, .78, .16, 1)`;
+    strip.style.transform = `translateY(${-steps * H}px)`;
+    // 每經過一個數字震一下（用 ease-out 反推時間點）
+    let last = -99;
+    for (let k = 1; k <= steps; k++) {
+      const at = (1 - Math.cbrt(1 - k / steps)) * DUR * .9;
+      if (at - last < 35) continue;
+      last = at;
+      setTimeout(() => haptic('tick'), at);
+    }
+    return new Promise(done => setTimeout(() => {
+      strip.style.transition = 'none';
+      strip.innerHTML = `<div>${final}</div>`;
+      strip.style.transform = 'translateY(0)';
+      done();
+    }, DUR + 60));
   }
 
   async function roll() {
     busy = true;
     btn.disabled = true;
     let t, fresh = false;
+    const before = loaded ? unlockedSet(derive()) : new Set();
     try {
-      await load(); // 重新讀一次，避免另一台裝置今天已經抽過
+      await load();                       // 重新讀一次，避免另一台裝置今天已經抽過
       t = today();
       if (!records[t]) {
         records[t] = { n: fairRandom(), saved: false };
         fresh = true;
-        await persist(t); // 先存再播動畫：中途關掉也不能重抽
-        await animate(records[t].n);
-        haptic('notify', 'success');
+        await persist(t);                 // 先存再播動畫：中途關掉也不能重抽
+        const n = records[t].n;
+        hero.classList.remove('idle', 'landed');
+        hero.classList.add('rolling');
+        $('heroChip').textContent = '抽獎中…';
+        $('heroMsg').textContent = ' ';
+        await spin(n);
+        hero.classList.remove('rolling');
+        hero.classList.add('landed');
+        if (n >= 45) { haptic('notify', 'success'); confetti(n === 50 ? 220 : 140); }
+        else haptic('impact', 'medium');
       }
     } catch (e) {
       if (fresh) delete records[t];
@@ -278,30 +598,39 @@
     } finally {
       busy = false;
       render();
+      if (fresh && records[t]) setTimeout(() => celebrateNew(before, unlockedSet(derive())), reduced ? 0 : 900);
     }
   }
 
+  // 按「已存」：直接記錄，幾秒內可以撤銷（取代確認視窗）
   async function markSaved(date) {
     const r = records[date];
     if (!r || r.saved || busy) return;
     busy = true;
+    const s0 = derive(), before = unlockedSet(s0), wasReached = s0.goalReached;
+    r.saved = true;
     try {
-      const msg = date === today()
-        ? `確認已經把 RM ${r.n} 轉進存錢帳戶了嗎？`
-        : `確認已補存 ${md(date)} 的 RM ${r.n}？`;
-      if (!(await ask(msg))) return;
-      r.saved = true;
-      try {
-        await persist(date);
-        haptic('notify', 'success');
-      } catch (e) {
-        r.saved = false;
-        tell('儲存失敗，請檢查網路後再試一次');
-      }
-    } finally {
+      await persist(date);
+    } catch (e) {
+      r.saved = false;
       busy = false;
       render();
+      return tell('儲存失敗，請檢查網路後再試一次');
     }
+    busy = false;
+    haptic('notify', 'success');
+    render();
+    if (date === today()) coinBurst();
+    const s1 = derive();
+    snack(date === today() ? `已存入 RM ${r.n} ✅` : `已補存 ${md(date)} RM ${r.n} ✅`, async () => {
+      r.saved = false;
+      try { await persist(date); } catch (e) { r.saved = true; tell('撤銷失敗，請檢查網路'); }
+      render();
+    });
+    if (!wasReached && s1.goalReached) {
+      unlockQueue.push({ kicker: '目標達成', ico: '🎯', t: goals.cur.name || '存錢目標', s: `已經存到 ${rm(goals.cur.amt)} 了！` });
+    }
+    celebrateNew(before, unlockedSet(s1));
   }
 
   btn.addEventListener('click', () => {
@@ -310,70 +639,455 @@
     if (!r) roll();
     else if (!r.saved) markSaved(today());
   });
-  $('list').addEventListener('click', e => {
-    const b = e.target.closest('[data-date]');
-    if (b) markSaved(b.dataset.date);
+
+  // ---------- 撤銷 snackbar ----------
+  let snackTimer = null, snackUndo = null;
+  function snack(text, undo, ms = 6000) {
+    clearTimeout(snackTimer);
+    snackUndo = undo;
+    $('snackText').textContent = text;
+    const bar = $('snackTimer');
+    bar.style.animation = 'none'; void bar.offsetHeight;
+    bar.style.animation = `timer ${ms}ms linear forwards`;
+    $('snack').hidden = false;
+    snackTimer = setTimeout(hideSnack, ms);
+  }
+  function hideSnack() { clearTimeout(snackTimer); $('snack').hidden = true; snackUndo = null; }
+  $('snackUndo').addEventListener('click', () => {
+    const u = snackUndo;
+    hideSnack();
+    if (u) { haptic('impact', 'light'); u(); }
   });
 
-  // ---------- 畫面 ----------
-  function setHero(label, n, sub) {
-    $('heroLabel').textContent = label;
-    num.textContent = n;
-    $('heroSub').textContent = sub;
+  // ---------- 彈窗（Telegram 返回鍵也能關） ----------
+  const openModals = [];
+  function openModal(id) {
+    $(id).hidden = false;
+    openModals.push(id);
+    if (can('6.1')) tg.BackButton.show();
   }
-
-  function renderHero() {
-    const r = records[today()];
-    hero.classList.toggle('done', !!(r && r.saved));
-    if (!loaded) return;
-    if (!r) {
-      hero.classList.remove('landed');
-      setHero('今天的數字', '?', '點下面的按鈕，抽出今天要存的金額');
-      btn.hidden = false; btn.disabled = false; btn.className = 'btn'; btn.textContent = '抽今天的數字 🎲';
-    } else if (!r.saved) {
-      setHero('今天要存', r.n, '轉帳到存錢帳戶後，按下面確認');
-      btn.hidden = false; btn.disabled = false; btn.className = 'btn ok'; btn.textContent = '我已經存了 ✅';
-    } else {
-      setHero('今天已存', r.n, '✅ 完成！明天早上再來');
-      btn.hidden = true;
-    }
+  function closeModal(id) {
+    $(id).hidden = true;
+    const i = openModals.indexOf(id);
+    if (i >= 0) openModals.splice(i, 1);
+    if (!openModals.length && can('6.1')) tg.BackButton.hide();
   }
+  if (can('6.1')) tg.BackButton.onClick(() => { const id = openModals[openModals.length - 1]; if (id) closeModal(id); if (id === 'unlockModal') setTimeout(showNextUnlock, 250); });
+  document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => {
+    if (e.target === m || e.target.closest('[data-close]')) { closeModal(m.id); if (m.id === 'unlockModal') setTimeout(showNextUnlock, 250); }
+  }));
 
-  function streak() {
-    const d = new Date();
-    if (!(records[ymd(d)] && records[ymd(d)].saved)) d.setDate(d.getDate() - 1); // 今天還沒存不算斷
-    let n = 0;
-    while (records[ymd(d)] && records[ymd(d)].saved) { n++; d.setDate(d.getDate() - 1); }
-    return n;
+  // ---------- 存錢目標 ----------
+  const etaDays = remaining => Math.ceil(remaining / EXPECTED);
+  function goalHint() {
+    const amt = parseInt($('gAmt').value.replace(/\D/g, ''), 10);
+    if (!amt) return '';
+    const left = amt - derive().goalProgress;
+    if (left <= 0) return '這個金額你已經存到了 🎉';
+    const n = etaDays(left);
+    return `照平均每天 RM 25.5，大約 ${n} 天（${md(addDays(today(), n))}）存到`;
   }
+  function openGoal() {
+    $('gName').value = goals.cur ? goals.cur.name : '';
+    $('gAmt').value = goals.cur ? goals.cur.amt : '';
+    $('gDelete').hidden = !goals.cur;
+    $('goalTitle').textContent = goals.cur ? '編輯目標' : '設定存錢目標';
+    $('gHint').textContent = goalHint();
+    openModal('goalModal');
+  }
+  $('gAmt').addEventListener('input', () => { $('gHint').textContent = goalHint(); });
+  $('gPresets').addEventListener('click', e => {
+    const b = e.target.closest('[data-amt]');
+    if (!b) return;
+    $('gAmt').value = b.dataset.amt;
+    $('gHint').textContent = goalHint();
+    haptic('tick');
+  });
+  $('gSave').addEventListener('click', async () => {
+    const amt = parseInt($('gAmt').value.replace(/\D/g, ''), 10);
+    if (!amt || amt < 10 || amt > 10000000) return tell('請輸入 RM 10 以上的目標金額');
+    const before = unlockedSet(derive());
+    const prev = goals.cur;
+    goals.cur = { name: $('gName').value.trim().slice(0, 20) || '存錢目標', amt };
+    try { await persistGoals(); } catch (e) { goals.cur = prev; return tell('儲存失敗，請檢查網路後再試一次'); }
+    closeModal('goalModal');
+    haptic('notify', 'success');
+    render();
+    celebrateNew(before, unlockedSet(derive()));
+  });
+  $('gDelete').addEventListener('click', async () => {
+    const prev = goals.cur;
+    goals.cur = null;
+    try { await persistGoals(); } catch (e) { goals.cur = prev; return tell('儲存失敗，請檢查網路後再試一次'); }
+    closeModal('goalModal');
+    render();
+  });
+  async function finishGoal() {
+    const prev = JSON.stringify(goals);
+    goals.done.push({ name: goals.cur.name, amt: goals.cur.amt, date: today() });
+    goals.cur = null;
+    try { await persistGoals(); } catch (e) { goals = JSON.parse(prev); return tell('儲存失敗，請檢查網路後再試一次'); }
+    render();
+    openGoal();
+  }
+  $('goal').addEventListener('click', e => {
+    const a = e.target.closest('[data-act]');
+    if (!a) return;
+    if (a.dataset.act === 'goal-edit') openGoal();
+    if (a.dataset.act === 'goal-finish') finishGoal();
+  });
 
-  function render() {
-    const t = today(), td = parse(t);
-    $('date').textContent = `${md(t)} · 週${WEEK[td.getDay()]}`;
-    if (busy) return;
-    renderHero();
-    if (!loaded) return;
-
-    const days = Object.keys(records).sort().reverse();
-    const thisMonth = t.slice(0, 7);
-    let total = 0, month = 0, savedDays = 0, owed = 0, owedDays = 0;
-    for (const d of days) {
-      const r = records[d];
-      if (r.saved) { total += r.n; savedDays++; if (d.startsWith(thisMonth)) month += r.n; }
-      else if (d !== t) { owed += r.n; owedDays++; }
-    }
-    $('sTotal').textContent = rm(total);
-    $('sMonth').textContent = rm(month);
-    $('sStreak').textContent = `${streak()} 天`;
-    $('sDays').textContent = `${savedDays} 天`;
-    $('owed').hidden = !owedDays;
-    $('owed').textContent = `之前有 ${owedDays} 天、共 ${rm(owed)} 抽了還沒存，可以在下面按「補存」`;
-
-    const list = $('list');
-    if (!days.length) {
-      list.innerHTML = '<div class="group empty">還沒有紀錄，今天就開始吧 🐷</div>';
+  function renderGoal(s) {
+    const el = $('goal');
+    el.hidden = false;
+    const g = goals.cur;
+    if (!g) {
+      el.innerHTML = `<div class="goal-empty"><div class="ico">🎯</div><div class="txt"><div class="t">設一個存錢目標</div>`
+        + `<div class="s">${goals.done.length ? `已達成 ${goals.done.length} 個目標，再來一個？` : '有目標比較不會半途而廢'}</div></div>`
+        + `<button class="btn-ghost" data-act="goal-edit">設定</button></div>`;
       return;
     }
+    if (s.goalReached) {
+      el.innerHTML = `<div class="goal-done"><div style="font-size:34px">🎉</div><div class="t">「${esc(g.name)}」達成！</div>`
+        + `<div class="muted" style="font-size:14px">已經存到 ${rm(g.amt)}</div>`
+        + `<button class="btn-ghost" data-act="goal-finish">完成，設下一個目標</button></div>`;
+      return;
+    }
+    const p = s.goalProgress, pct = Math.min(100, p / g.amt * 100), left = g.amt - p, n = etaDays(left);
+    el.innerHTML = `<div class="goal-head"><div><div class="k">🎯 存錢目標</div><div class="goal-name">${esc(g.name)}</div></div>`
+      + `<button class="btn-ghost" data-act="goal-edit">編輯</button></div>`
+      + `<div class="goal-nums"><span class="big">${rm(p)}</span><span class="muted">/ ${rm(g.amt)}</span><span class="pct">${pct < 1 && p > 0 ? '<1' : Math.floor(pct)}%</span></div>`
+      + `<div class="meter"><div style="width:${pct}%"></div></div>`
+      + `<div class="goal-eta">還差 <b>${rm(left)}</b> · 照平均每天 RM 25.5，大約 ${n} 天後（${md(addDays(s.t, n))}）達成</div>`;
+  }
+
+  // ---------- 主畫面 ----------
+  function flavor(n) {
+    if (n === 50) return '🎰 滿分！今天存最多';
+    if (n >= 45) return '🔥 大數字！';
+    if (n <= 5) return '😌 今天輕鬆';
+    if (n === 25 || n === 26) return '⚖️ 剛好平均';
+    return '';
+  }
+  function renderHero(s) {
+    const r = records[s.t];
+    hero.classList.toggle('done', !!(r && r.saved));
+    hero.classList.toggle('idle', !r);
+    hero.classList.toggle('landed', !!r);
+    $('heroStreak').hidden = !s.cur;
+    $('heroStreak').textContent = `🔥 連續 ${s.cur} 天`;
+    $('countdown').hidden = !(r && r.saved);
+    if (!r) {
+      $('heroChip').textContent = '今天的數字';
+      strip.innerHTML = '<div>?</div>';
+      $('heroMsg').textContent = '點下面的按鈕，抽出今天要存的金額';
+      btn.hidden = false; btn.disabled = false; btn.className = 'btn'; btn.textContent = '抽今天的數字';
+    } else if (!r.saved) {
+      $('heroChip').textContent = '今天要存';
+      strip.innerHTML = `<div>${r.n}</div>`;
+      const f = flavor(r.n);
+      $('heroMsg').innerHTML = (f ? `${f}<br>` : '') + `轉帳 RM ${r.n} 到存錢帳戶後，按下面確認`;
+      btn.hidden = false; btn.disabled = false; btn.className = 'btn confirm'; btn.textContent = '我已經存了 ✅';
+    } else {
+      $('heroChip').textContent = '今天已存';
+      strip.innerHTML = `<div>${r.n}</div>`;
+      $('heroMsg').textContent = '✅ 完成！明天早上再來';
+      btn.hidden = true;
+      updateCountdown();
+    }
+  }
+  function updateCountdown() {
+    const now = new Date(), mid = new Date(now); mid.setHours(24, 0, 0, 0);
+    const mins = Math.max(1, Math.ceil((mid - now) / 60000));
+    $('countdown').textContent = `下一次抽獎：${Math.floor(mins / 60)} 小時 ${mins % 60} 分後`;
+  }
+
+  // 數字跳動到新值
+  function countTo(el, to, fmt) {
+    const from = Number(el.dataset.v || 0);
+    el.dataset.v = to;
+    if (reduced || from === to) { el.innerHTML = fmt(to); return; }
+    const t0 = performance.now(), D = 700;
+    const step = now => {
+      const p = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - p, 3);
+      el.innerHTML = fmt(Math.round(from + (to - from) * e));
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+  const fmtRM = n => rm(n), fmtDays = n => `${n}<small>天</small>`;
+
+  function render() {
+    const s = derive(), td = parse(s.t);
+    $('dateMain').textContent = md(s.t);
+    $('dateWeek').textContent = `${td.getFullYear()} · ${wk(s.t)}`;
+    if (!loaded) return;
+    if (!busy) renderHero(s);
+    renderGoal(s);
+    countTo($('sTotal'), s.total, fmtRM);
+    countTo($('sMonth'), s.month, fmtRM);
+    countTo($('sStreak'), s.cur, fmtDays);
+    countTo($('sBest'), s.best, fmtDays);
+    $('owed').hidden = !s.owedDays;
+    $('owed').innerHTML = `<span>⏳</span><span>之前有 ${s.owedDays} 天、共 <b>${rm(s.owed)}</b> 抽了還沒存，在日曆或紀錄裡可以補存</span>`;
+    const got = unlockedSet(s).size;
+    document.querySelectorAll('#tabs button').forEach(b => {
+      b.classList.toggle('on', b.dataset.tab === tab);
+      if (b.dataset.tab === 'ach') b.innerHTML = `成就<span class="badge">${got}</span>`;
+    });
+    renderPanel(s);
+  }
+
+  $('tabs').addEventListener('click', e => {
+    const b = e.target.closest('[data-tab]');
+    if (!b || b.dataset.tab === tab) return;
+    tab = b.dataset.tab;
+    try { localStorage.setItem('stack50:tab', tab); } catch (err) {}
+    haptic('tick');
+    render();
+  });
+
+  function renderPanel(s) {
+    const p = $('panel');
+    if (tab === 'cal') p.innerHTML = calendarHTML(s);
+    else if (tab === 'stats') p.innerHTML = statsHTML(s);
+    else if (tab === 'ach') p.innerHTML = achHTML(s);
+    else p.innerHTML = logHTML(s);
+  }
+
+  // 補存 / 日曆 / 圖表點擊
+  $('panel').addEventListener('click', e => {
+    const fix = e.target.closest('[data-fix]');
+    if (fix) return markSaved(fix.dataset.fix);
+    const nav = e.target.closest('[data-cal]');
+    if (nav) {
+      const [y, m] = calMonth.split('-').map(Number), d = new Date(y, m - 1 + Number(nav.dataset.cal), 1);
+      calMonth = ymd(d).slice(0, 7);
+      haptic('tick');
+      return render();
+    }
+    const cell = e.target.closest('[data-day]');
+    if (cell) { calSel = cell.dataset.day; haptic('tick'); return render(); }
+    const dex = e.target.closest('[data-dex]');
+    if (dex) { statSel.dex = Number(dex.dataset.dex); haptic('tick'); return render(); }
+  });
+
+  // ---------- 日曆熱力圖 ----------
+  const level = n => Math.min(5, Math.ceil(n / 10));
+  function calendarHTML(s) {
+    const [y, m] = calMonth.split('-').map(Number), n = daysIn(y, m);
+    const first = (new Date(y, m - 1, 1).getDay() + 6) % 7;   // 週一開頭
+    const earliest = (s.dates[0] || s.t).slice(0, 7);
+    let cells = '';
+    for (let i = 0; i < first; i++) cells += '<span class="cell blank"></span>';
+    let monthSum = 0, monthDays = 0;
+    for (let i = 1; i <= n; i++) {
+      const d = `${calMonth}-${pad(i)}`, r = records[d];
+      let cls = 'cell';
+      if (d > s.t) cls += ' future';
+      else if (r && r.saved) { cls += ' l' + level(r.n); monthSum += r.n; monthDays++; }
+      else if (r) cls += ' pending';
+      if (d === s.t) cls += ' is-today';
+      if (d === calSel) cls += ' sel';
+      cells += d > s.t ? `<span class="${cls}" style="display:grid;place-items:center">${i}</span>`
+        : `<button class="${cls}" data-day="${d}" aria-label="${md(d)}">${i}</button>`;
+    }
+    const r = records[calSel];
+    let detail;
+    if (!r) detail = `<span><b>${md(calSel)}</b> ${wk(calSel)}</span><span>${calSel === s.t ? '今天還沒抽' : '沒有紀錄'}</span>`;
+    else if (r.saved) detail = `<span><b>${md(calSel)}</b> ${wk(calSel)} · <b>RM ${r.n}</b></span><span class="tag ok">已存</span>`;
+    else detail = `<span><b>${md(calSel)}</b> ${wk(calSel)} · <b>RM ${r.n}</b></span>`
+      + (calSel === s.t ? '<span class="tag wait">待存</span>' : `<button class="tag fix" data-fix="${calSel}">補存</button>`);
+    return `<div class="card" style="margin-top:0">
+      <div class="cal-head"><button class="nav" data-cal="-1" ${calMonth <= earliest ? 'disabled' : ''} aria-label="上個月">‹</button>
+        <div style="text-align:center"><div class="title">${y}年${m}月</div><div class="k">已存 ${rm(monthSum)} · ${monthDays} 天</div></div>
+        <button class="nav" data-cal="1" ${calMonth >= s.t.slice(0, 7) ? 'disabled' : ''} aria-label="下個月">›</button></div>
+      <div class="cal-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+      <div class="cal-grid">${cells}</div>
+      <div class="legend"><span>RM 1<span class="ramp"><i style="background:var(--h1)"></i><i style="background:var(--h2)"></i><i style="background:var(--h3)"></i><i style="background:var(--h4)"></i><i style="background:var(--h5)"></i></span>50</span>
+        <span><i class="sw pending"></i> 抽了還沒存</span></div>
+      <div class="readout">${detail}</div>
+    </div>`;
+  }
+
+  // ---------- 統計圖表（手寫 SVG，點一下看數值） ----------
+  const W = 340;
+  function barPath(x, y, w, base) {         // 上方 4px 圓角、底部方角
+    const r = Math.min(4, w / 2, (base - y) / 1);
+    if (base - y < 1) return '';
+    return `M${x},${base}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${base}Z`;
+  }
+  function hbarPath(x, y, w, h) {           // 右端圓角、左端方角
+    if (w < 1) return '';
+    const r = Math.min(4, h / 2, w);
+    return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x}Z`;
+  }
+  const niceMax = v => { if (v <= 0) return 10; const p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; };
+
+  function cumChart(s) {
+    const pts = s.cum;
+    if (pts.length < 2) return `<div class="empty-chart">存滿 2 天後，這裡會畫出你的存款曲線 📈</div>`;
+    const H = 150, L = 38, R = 14, T = 12, B = 22;
+    const x0 = parse(pts[0][0]).getTime(), x1 = Math.max(parse(pts[pts.length - 1][0]).getTime(), x0 + 864e5);
+    const ymax = niceMax(pts[pts.length - 1][1]);
+    const X = d => L + (parse(d).getTime() - x0) / (x1 - x0) * (W - L - R);
+    const Y = v => T + (1 - v / ymax) * (H - T - B);
+    const line = pts.map(([d, v], i) => `${i ? 'L' : 'M'}${X(d).toFixed(1)},${Y(v).toFixed(1)}`).join('');
+    const area = `${line}L${X(pts[pts.length - 1][0]).toFixed(1)},${Y(0)}L${X(pts[0][0]).toFixed(1)},${Y(0)}Z`;
+    const sel = statSel.cum != null ? pts[Math.min(statSel.cum, pts.length - 1)] : null;
+    const last = pts[pts.length - 1];
+    let svg = `<svg viewBox="0 0 ${W} ${H}" data-chart="cum" role="img" aria-label="累積存款曲線">`
+      + [0, ymax / 2, ymax].map(v => `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="axis" x="${L - 6}" y="${Y(v) + 3}" text-anchor="end">${money(v)}</text>`).join('')
+      + `<text class="axis" x="${L}" y="${H - 6}">${md(pts[0][0])}</text><text class="axis" x="${W - R}" y="${H - 6}" text-anchor="end">${md(last[0])}</text>`
+      + `<path d="${area}" fill="var(--neon)" fill-opacity=".1"/>`
+      + `<path d="${line}" fill="none" stroke="var(--neon)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    if (sel) svg += `<line x1="${X(sel[0])}" x2="${X(sel[0])}" y1="${T}" y2="${Y(0)}" stroke="var(--text-2)" stroke-width="1"/>`
+      + `<circle cx="${X(sel[0])}" cy="${Y(sel[1])}" r="5" fill="var(--neon)" stroke="var(--surface)" stroke-width="2"/>`;
+    else svg += `<circle cx="${X(last[0])}" cy="${Y(last[1])}" r="5" fill="var(--neon)" stroke="var(--surface)" stroke-width="2"/>`;
+    svg += `<rect x="${L}" y="0" width="${W - L - R}" height="${H}" fill="transparent" data-hit="cum"/></svg>`;
+    const ro = sel ? `<span><b>${md(sel[0])}</b> ${wk(sel[0])}</span><span>累積 <b>${rm(sel[1])}</b></span>`
+      : `<span>點圖表看每一天</span><span>目前 <b>${rm(last[1])}</b></span>`;
+    return svg + `<div class="readout">${ro}</div>`;
+  }
+
+  function monthDailyChart(s) {
+    const [y, m] = s.t.slice(0, 7).split('-').map(Number), n = daysIn(y, m);
+    const H = 150, L = 26, R = 6, T = 14, B = 22, base = H - B;
+    const slot = (W - L - R) / n, bw = Math.min(24, slot - 2);
+    const Y = v => T + (1 - v / MAX) * (base - T);
+    let bars = '', hasPending = false;
+    const sel = statSel.day;
+    for (let i = 1; i <= n; i++) {
+      const d = `${s.t.slice(0, 7)}-${pad(i)}`, r = records[d];
+      if (!r) continue;
+      if (!r.saved) hasPending = true;
+      const x = L + (i - 1) * slot + (slot - bw) / 2;
+      bars += `<path d="${barPath(x, Y(r.n), bw, base)}" fill="${r.saved ? 'var(--neon)' : 'var(--amber)'}" ${sel && sel !== i ? 'class="dim"' : ''}/>`;
+    }
+    const ticks = [1, 10, 20, n].map(i => `<text class="axis" x="${L + (i - .5) * slot}" y="${H - 6}" text-anchor="middle">${i}</text>`).join('');
+    let svg = `<svg viewBox="0 0 ${W} ${H}" data-chart="day" role="img" aria-label="本月每天存款">`
+      + [0, 50].map(v => `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="axis" x="${L - 5}" y="${Y(v) + 3}" text-anchor="end">${v}</text>`).join('')
+      + `<line x1="${L}" x2="${W - R}" y1="${Y(EXPECTED)}" y2="${Y(EXPECTED)}" stroke="var(--text-2)" stroke-width="1" stroke-opacity=".6"/>`
+      + `<text class="axis" x="${W - R}" y="${Y(EXPECTED) - 4}" text-anchor="end">期望 25.5</text>`
+      + bars + ticks
+      + `<rect x="${L}" y="0" width="${W - L - R}" height="${H}" fill="transparent" data-hit="day" data-n="${n}"/></svg>`;
+    let ro = `<span>點長條看每一天</span><span>本月抽了 ${Object.keys(records).filter(d => d.startsWith(s.t.slice(0, 7))).length} 天</span>`;
+    if (sel) {
+      const d = `${s.t.slice(0, 7)}-${pad(sel)}`, r = records[d];
+      ro = r ? `<span><b>${md(d)}</b> ${wk(d)}</span><span><b>RM ${r.n}</b> · ${r.saved ? '已存' : '待存'}</span>`
+        : `<span><b>${md(d)}</b> ${wk(d)}</span><span>${d > s.t ? '還沒到' : '沒有紀錄'}</span>`;
+    }
+    const legend = `<div class="legend" style="margin-top:6px"><span><i class="sw saved"></i> 已存</span>${hasPending ? '<span><i class="sw pending" style="background:var(--amber);box-shadow:none"></i> 待存</span>' : ''}</div>`;
+    return svg + legend + `<div class="readout">${ro}</div>`;
+  }
+
+  function monthlyChart(s) {
+    const months = [...s.monthly.keys()].sort().slice(-12);
+    if (months.length < 2) return `<div class="empty-chart">下個月開始，這裡會出現每月比較 📊</div>`;
+    const H = 150, L = 38, R = 6, T = 18, B = 22, base = H - B;
+    const vals = months.map(m => s.monthly.get(m)), ymax = niceMax(Math.max(...vals));
+    const slot = (W - L - R) / months.length, bw = Math.min(24, slot - 2);
+    const Y = v => T + (1 - v / ymax) * (base - T);
+    const sel = statSel.mon;
+    let svg = `<svg viewBox="0 0 ${W} ${H}" data-chart="mon" role="img" aria-label="每月存款">`
+      + [0, ymax / 2, ymax].map(v => `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="axis" x="${L - 5}" y="${Y(v) + 3}" text-anchor="end">${money(v)}</text>`).join('');
+    months.forEach((m, i) => {
+      const x = L + i * slot + (slot - bw) / 2;
+      svg += `<path d="${barPath(x, Y(vals[i]), bw, base)}" fill="var(--neon)" ${sel != null && sel !== i ? 'class="dim"' : ''}/>`
+        + `<text class="axis" x="${x + bw / 2}" y="${H - 6}" text-anchor="middle">${Number(m.slice(5))}月</text>`;
+    });
+    const li = months.length - 1, lx = L + li * slot + slot / 2;
+    svg += `<text class="lbl" x="${lx}" y="${Y(vals[li]) - 5}" text-anchor="middle">${money(vals[li])}</text>`;
+    svg += `<rect x="${L}" y="0" width="${W - L - R}" height="${H}" fill="transparent" data-hit="mon" data-n="${months.length}"/></svg>`;
+    const ro = sel != null ? `<span><b>${months[sel].replace('-', '年')}月</b></span><span>已存 <b>${rm(vals[sel])}</b></span>`
+      : `<span>點長條看每個月</span><span>平均每月 <b>${rm(Math.round(vals.reduce((a, b) => a + b, 0) / vals.length))}</b></span>`;
+    return svg + `<div class="readout">${ro}</div>`;
+  }
+
+  function distChart(s) {
+    if (!s.rolls) return `<div class="empty-chart">抽過之後會出現數字分布</div>`;
+    const buckets = [0, 0, 0, 0, 0];
+    for (const [n, c] of s.drawn) buckets[level(n) - 1] += c;
+    const H = 5 * 26 + 8, L = 50, R = 34, bh = 16, xmax = Math.max(...buckets, 1);
+    const X = v => v / xmax * (W - L - R);
+    const exp = s.rolls / 5;
+    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="數字分布">`;
+    buckets.forEach((c, i) => {
+      const y = 4 + i * 26;
+      svg += `<text class="axis" x="${L - 8}" y="${y + bh / 2 + 3}" text-anchor="end">${i * 10 + 1}–${i * 10 + 10}</text>`
+        + `<path d="${hbarPath(L, y, X(c), bh)}" fill="var(--h${i + 1})"/>`
+        + `<text class="lbl" x="${L + X(c) + 6}" y="${y + bh / 2 + 4}">${c}</text>`;
+    });
+    if (exp <= xmax) svg += `<line x1="${L + X(exp)}" x2="${L + X(exp)}" y1="0" y2="${H - 4}" stroke="var(--text-2)" stroke-width="1" stroke-opacity=".6"/>`;
+    svg += `<line x1="${L}" x2="${L}" y1="0" y2="${H - 4}" class="grid"/></svg>`;
+    return svg + `<div class="legend" style="margin-top:4px"><span><i style="display:inline-block;width:12px;height:1px;background:var(--text-2);vertical-align:middle"></i> 期望次數（每段 20%）</span></div>`;
+  }
+
+  function dexHTML(s) {
+    let h = '<div class="dex">';
+    for (let i = 1; i <= 50; i++) h += `<button data-dex="${i}" class="${s.drawn.has(i) ? 'got' : ''}${statSel.dex === i ? ' sel' : ''}">${i}</button>`;
+    h += '</div>';
+    const sel = statSel.dex;
+    const ro = sel ? `<span><b>RM ${sel}</b></span><span>${s.drawn.has(sel) ? `抽過 <b>${s.drawn.get(sel)}</b> 次` : '還沒抽過'}</span>`
+      : `<span>全部抽過會解鎖「數字收藏家」</span><span><b>${s.drawn.size}</b> / 50</span>`;
+    return h + `<div class="readout">${ro}</div>`;
+  }
+
+  function statsHTML(s) {
+    const avg = s.rolls ? s.sumRolls / s.rolls : 0, luck = s.rolls ? (avg - EXPECTED) / EXPECTED * 100 : 0;
+    const figs = `<div class="figs">
+      <div class="fig"><div class="v">${s.savedDays}<small class="muted" style="font-size:13px"> 天</small></div><div class="d">總共存了</div></div>
+      <div class="fig"><div class="v">${s.rolls ? 'RM ' + avg.toFixed(1) : '—'}</div><div class="d">平均每天 · 期望 25.5</div></div>
+      <div class="fig"><div class="v">${s.rolls ? (luck >= 0 ? '↑ ' : '↓ ') + Math.abs(luck).toFixed(0) + '%' : '—'}</div><div class="d">運氣${s.rolls ? `（比期望${luck >= 0 ? '高' : '低'}）` : ''}</div></div>
+      <div class="fig"><div class="v">${s.rolls ? `${s.min}–${s.max}` : '—'}</div><div class="d">抽過的最小–最大</div></div>
+    </div>`;
+    return figs
+      + `<div class="card chart"><h3>累積存款</h3><div class="sub">每天存進去的錢加起來</div>${cumChart(s)}</div>`
+      + `<div class="card chart"><h3>本月每天</h3><div class="sub">橫線是平均值 RM 25.5</div>${monthDailyChart(s)}</div>`
+      + `<div class="card chart"><h3>每月存款</h3><div class="sub">最近 12 個月</div>${monthlyChart(s)}</div>`
+      + `<div class="card chart"><h3>數字分布</h3><div class="sub">抽到的數字落在哪一段；抽越多天會越平均</div>${distChart(s)}</div>`
+      + `<div class="card chart"><h3>數字圖鑑</h3><div class="sub">1–50 你抽過哪些</div>${dexHTML(s)}</div>`;
+  }
+
+  // 圖表點擊 / 拖曳：依 x 座標找最近的資料
+  function chartPick(e) {
+    const hit = e.target.closest('[data-hit]');
+    if (!hit) return false;
+    const svg = hit.ownerSVGElement, box = svg.getBoundingClientRect();
+    const x = (e.clientX - box.left) / box.width * W;
+    const kind = hit.dataset.hit, L = Number(hit.getAttribute('x')), w = Number(hit.getAttribute('width'));
+    const frac = Math.max(0, Math.min(.9999, (x - L) / w));
+    let v;
+    if (kind === 'cum') {
+      const s = derive(), pts = s.cum, x0 = parse(pts[0][0]).getTime(), x1 = Math.max(parse(pts[pts.length - 1][0]).getTime(), x0 + 864e5);
+      const tt = x0 + frac * (x1 - x0);
+      v = pts.reduce((bi, p, i) => Math.abs(parse(p[0]).getTime() - tt) < Math.abs(parse(pts[bi][0]).getTime() - tt) ? i : bi, 0);
+    } else if (kind === 'day') v = Math.floor(frac * Number(hit.dataset.n)) + 1;
+    else v = Math.floor(frac * Number(hit.dataset.n));
+    if (statSel[kind] !== v) { statSel[kind] = v; haptic('tick'); render(); }
+    return true;
+  }
+  let dragging = false;
+  $('panel').addEventListener('pointerdown', e => { if (chartPick(e)) dragging = true; });
+  $('panel').addEventListener('pointermove', e => { if (dragging) chartPick(e); });
+  addEventListener('pointerup', () => { dragging = false; });
+  addEventListener('pointercancel', () => { dragging = false; });
+
+  // ---------- 成就 ----------
+  function achHTML(s) {
+    const got = unlockedSet(s);
+    const items = ACH.map(a => {
+      const [c, n] = a.v(s), on = got.has(a.id);
+      const prog = on ? '' : n > 1 ? `<div class="p"><div style="width:${Math.min(100, c / n * 100)}%"></div></div><div class="s">${money(Math.min(c, n))} / ${money(n)}</div>` : '';
+      return `<div class="ach${on ? ' on' : ''}"><div class="ico">${a.ico}</div><div class="t">${a.t}</div><div class="s">${a.s}</div>${prog}</div>`;
+    }).join('');
+    return `<div class="ach-sum"><span class="muted">已解鎖</span><span><b>${got.size}</b> <span class="muted">/ ${ACH.length}</span></span></div><div class="ach-grid">${items}</div>`;
+  }
+
+  // ---------- 紀錄 ----------
+  function logHTML(s) {
+    const days = [...s.dates].reverse();
+    if (!days.length) return '<div class="group empty">還沒有紀錄，今天就開始吧 🐷</div>';
     const groups = new Map();
     for (const d of days) {
       const m = d.slice(0, 7);
@@ -383,27 +1097,71 @@
     let html = '';
     for (const [m, ds] of groups) {
       const [y, mo] = m.split('-').map(Number);
-      const sum = ds.reduce((s, d) => s + (records[d].saved ? records[d].n : 0), 0);
+      const sum = ds.reduce((a, d) => a + (records[d].saved ? records[d].n : 0), 0);
       html += `<div class="mhead"><span>${y}年${mo}月</span><span>已存 ${rm(sum)}</span></div><div class="group">`;
       for (const d of ds) {
         const r = records[d];
         const tag = r.saved ? '<span class="tag ok">已存</span>'
-          : d === t ? '<span class="tag wait">待存</span>'
-          : `<button class="tag fix" data-date="${d}">補存</button>`;
-        html += `<div class="row"><div class="d">${md(d)}<small>週${WEEK[parse(d).getDay()]}</small></div>`
-          + `<div class="n">RM ${r.n}</div>${tag}</div>`;
+          : d === s.t ? '<span class="tag wait">待存</span>'
+          : `<button class="tag fix" data-fix="${d}">補存</button>`;
+        html += `<div class="row"><div class="d">${md(d)}<small>${wk(d)}</small></div><div class="n">RM ${r.n}</div>${tag}</div>`;
       }
       html += '</div>';
     }
-    list.innerHTML = html;
+    return html;
   }
 
-  // 從背景切回來時重新讀取（可能在別的裝置操作過），過了午夜也會換成新的一天
+  // ---------- 特效：彩帶 / 硬幣 ----------
+  const fx = $('fx'), ctx = fx.getContext('2d');
+  let parts = [], fxRunning = false;
+  function fxLoop() {
+    const dpr = devicePixelRatio || 1;
+    if (fx.width !== innerWidth * dpr) { fx.width = innerWidth * dpr; fx.height = innerHeight * dpr; }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    parts = parts.filter(p => p.life > 0 && p.y < innerHeight + 40);
+    for (const p of parts) {
+      p.vy += p.g; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life--;
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, p.life / 30);
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.c;
+      if (p.coin) { ctx.beginPath(); ctx.ellipse(0, 0, p.s, p.s * Math.abs(Math.cos(p.rot * 2)) + 1, 0, 0, Math.PI * 2); ctx.fill(); }
+      else ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2);
+      ctx.restore();
+    }
+    if (parts.length) requestAnimationFrame(fxLoop); else { fxRunning = false; ctx.clearRect(0, 0, innerWidth, innerHeight); }
+  }
+  function startFx() { if (!fxRunning) { fxRunning = true; requestAnimationFrame(fxLoop); } }
+  const COLORS = ['#39f58a', '#2cb46e', '#eef2ef', '#b7c2bc', '#ffd166'];
+  function confetti(count) {
+    if (reduced) return;
+    for (let i = 0; i < count; i++) {
+      parts.push({ x: innerWidth / 2 + (Math.random() - .5) * 80, y: innerHeight * .32, vx: (Math.random() - .5) * 14, vy: -Math.random() * 13 - 4,
+        g: .32, rot: Math.random() * 6, vr: (Math.random() - .5) * .3, s: 6 + Math.random() * 6, c: COLORS[i % COLORS.length], life: 150 + Math.random() * 60, coin: i % 4 === 0 });
+    }
+    startFx();
+  }
+  function coinBurst() {
+    if (reduced) return;
+    const b = hero.getBoundingClientRect(), cx = b.left + b.width / 2, cy = b.top + b.height * .45;
+    for (let i = 0; i < 26; i++) {
+      const a = Math.random() * Math.PI - Math.PI, sp = 4 + Math.random() * 6;
+      parts.push({ x: cx, y: cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 3, g: .35, rot: Math.random() * 6, vr: .2, s: 5 + Math.random() * 4,
+        c: i % 3 ? '#39f58a' : '#eef2ef', life: 90, coin: true });
+    }
+    startFx();
+  }
+
+  // ---------- 生命週期 ----------
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && loaded && !busy) load().then(render, render);
   });
   let shownDay = today();
-  setInterval(() => { if (today() !== shownDay) { shownDay = today(); render(); } }, 30000);
+  setInterval(() => {
+    if (today() !== shownDay) { shownDay = today(); calMonth = shownDay.slice(0, 7); calSel = shownDay; render(); }
+    else if (!$('countdown').hidden) updateCountdown();
+  }, 30000);
 
   (async () => {
     render();
@@ -412,7 +1170,7 @@
       loaded = true;
       render();
     } catch (e) {
-      $('heroSub').textContent = '讀取資料失敗，請關掉再打開一次';
+      $('heroMsg').textContent = '讀取資料失敗，請關掉再打開一次';
     }
   })();
 })();
