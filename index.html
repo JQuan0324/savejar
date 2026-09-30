@@ -368,6 +368,9 @@
     else h.notificationOccurred(arg || 'success');
   }
   const tell = msg => can('6.2') ? tg.showAlert(msg) : window.alert(msg);
+  const ask = msg => can('6.2')
+    ? new Promise(res => tg.showConfirm(msg, ok => res(!!ok)))
+    : Promise.resolve(window.confirm(msg));
 
   // ---------- 儲存：Telegram CloudStorage（跨裝置同步），瀏覽器預覽時用 localStorage ----------
   // "m-2026-09" → {"30":[23,1]}（[金額, 是否已存]）；"goals" → {cur:{name,amt}|null, done:[{name,amt,date}]}
@@ -388,6 +391,12 @@
     async set(key, value) {
       if (useCloud) return cloud('setItem', key, value);
       localStorage.setItem(LS + key, value);
+    },
+    async clear() {
+      const keys = await this.keys();
+      if (!keys.length) return;
+      if (useCloud) return cloud('removeItems', keys);
+      keys.forEach(k => localStorage.removeItem(LS + k));
     },
   };
 
@@ -868,6 +877,7 @@
     }
     const cell = e.target.closest('[data-day]');
     if (cell) { calSel = cell.dataset.day; haptic('tick'); return render(); }
+    if (e.target.closest('[data-reset]')) return resetAll();
     const dex = e.target.closest('[data-dex]');
     if (dex) { statSel.dex = Number(dex.dataset.dex); haptic('tick'); return render(); }
   });
@@ -1108,7 +1118,32 @@
       }
       html += '</div>';
     }
-    return html;
+    return html + '<button class="link-danger" data-reset style="margin-top:22px">清除所有資料</button>';
+  }
+
+  // 清除所有紀錄、目標（成就是從紀錄算出來的，會一起歸零）
+  async function resetAll() {
+    if (busy) return;
+    const s = derive();
+    const ok = await ask(`確定要清除全部 ${s.rolls} 天的紀錄（已存 ${rm(s.total)}）、存錢目標和成就嗎？\n\n清除後無法復原。`);
+    if (!ok) return;
+    busy = true;
+    try {
+      await store.clear();
+      records = {};
+      goals = { cur: null, done: [] };
+      statSel = {};
+      calMonth = today().slice(0, 7); calSel = today();
+      hideSnack();
+      haptic('notify', 'warning');
+    } catch (e) {
+      tell('清除失敗，請檢查網路後再試一次');
+    } finally {
+      busy = false;
+      tab = 'cal';
+      render();
+      scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+    }
   }
 
   // ---------- 特效：彩帶 / 硬幣 ----------
