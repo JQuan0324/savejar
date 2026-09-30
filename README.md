@@ -1,0 +1,34 @@
+# 每日存錢 🐷 — Telegram Mini App
+
+每天早上打開，抽一個 1–50 的整數（每個數字機率 2%），抽到多少就存多少 RM。
+
+- 一天只能抽一次（結果先存好才播動畫，關掉重開也不能重抽）
+- 轉帳後按「我已經存了 ✅」才會算進總額
+- 忘記確認的日子可以在紀錄裡按「補存」
+- 顯示累積已存、本月已存、連續天數、總天數
+- 資料存在 Telegram 雲端（CloudStorage），換手機也在，不需要伺服器或資料庫
+
+整個 app 只有一個檔案：`index.html`。完全免費。
+
+---
+
+## 網址
+
+https://jquan0324.github.io/savejar/
+
+## 綁定到 Telegram bot
+
+1. Telegram 搜尋 **@BotFather**，傳 `/newbot`，照指示取名字；username 要用 `bot` 結尾
+   （BotFather 給的 token 這個 app 用不到，也不要給任何人）
+2. 傳 `/mybots` → 選你的 bot → **Bot Settings → Menu Button → Configure menu button**
+3. 貼上上面的網址，按鈕名稱輸入 `存錢`
+4. 打開 bot 聊天室，按輸入框左邊的 **「存錢」** 按鈕
+
+---
+
+## 注意
+
+- 資料綁定的是「這個 bot + 你的 Telegram 帳號」。改網址或更新 `index.html` 都不會掉資料；**刪掉 bot 或換一個 bot，資料就不見了。**
+- 「今天」用手機的時間算，過了午夜 12 點就可以抽新的一天。
+- 在一般瀏覽器打開時是「預覽模式」，資料只存在那個瀏覽器，跟 Telegram 裡的不互通。
+- 要修改 app，更新這個 repo 的 `index.html`，約 1 分鐘後生效（Telegram 可能有快取，關掉 app 重開即可）。
